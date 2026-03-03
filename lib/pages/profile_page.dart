@@ -344,7 +344,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           Switch(
                             value: themeProvider.isDark,
                             onChanged: (_) => themeProvider.toggleTheme(),
-                            activeColor: AppTheme.accent,
+                            activeColor: const Color.fromARGB(
+                              255,
+                              141,
+                              141,
+                              218,
+                            ),
                           ),
                         ],
                       );
@@ -383,7 +388,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: _handleLogout,
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        foregroundColor: const Color(0xFFEF5350),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -436,7 +440,10 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (ctx) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -485,7 +492,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         color: Colors.black54,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close, color: Colors.white, size: 18),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),

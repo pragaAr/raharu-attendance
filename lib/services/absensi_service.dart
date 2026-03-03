@@ -16,12 +16,15 @@ class AbsensiService {
   Future<AbsensiResult> submitAbsen() async {
     final token = await _authService.getToken();
     if (token == null) {
-      return AbsensiResult(success: false, message: 'Tidak ada sesi aktif, harap login kembali.');
+      return AbsensiResult(
+        success: false,
+        message: 'Tidak ada sesi aktif, harap login kembali.',
+      );
     }
 
     try {
       final response = await _postWithFallback(
-        '/absensi/store',
+        '/absensi/clock',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -60,11 +63,7 @@ class AbsensiService {
     for (final baseUrl in ApiConfig.fallbackBaseUrls) {
       try {
         return await http
-            .post(
-              Uri.parse('$baseUrl$endpoint'),
-              headers: headers,
-              body: body,
-            )
+            .post(Uri.parse('$baseUrl$endpoint'), headers: headers, body: body)
             .timeout(const Duration(seconds: 15));
       } catch (e) {
         lastError = e;
