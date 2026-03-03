@@ -1,0 +1,167 @@
+import 'package:flutter/material.dart';
+import 'package:absensi/config/app_theme.dart';
+
+class HistoryPage extends StatefulWidget {
+  const HistoryPage({super.key});
+
+  @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : AppTheme.primaryDark;
+    final subtitleColor =
+        isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[500]!;
+
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              'Riwayat',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Histori kehadiran dan cuti',
+              style: TextStyle(fontSize: 13, color: subtitleColor),
+            ),
+            const SizedBox(height: 20),
+
+            // Tab Bar
+            Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.grey[100],
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: isDark ? AppTheme.accent : AppTheme.primaryDark,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: isDark
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.grey[500],
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: const [
+                  Tab(text: 'Absensi'),
+                  Tab(text: 'Cuti / Libur'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildEmptyState(
+                    icon: Icons.history_rounded,
+                    title: 'Belum ada data absensi',
+                    subtitle: 'Riwayat absensi akan muncul di sini',
+                    isDark: isDark,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                  ),
+                  _buildEmptyState(
+                    icon: Icons.event_note_rounded,
+                    title: 'Belum ada data cuti',
+                    subtitle: 'Riwayat cuti dan libur akan muncul di sini',
+                    isDark: isDark,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isDark,
+    required Color textColor,
+    required Color subtitleColor,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.grey[100],
+            ),
+            child: Icon(
+              icon,
+              size: 36,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : Colors.grey[400],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 13, color: subtitleColor),
+          ),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+}

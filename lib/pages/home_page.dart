@@ -1,0 +1,477 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:absensi/config/app_theme.dart';
+import 'package:absensi/services/auth_service.dart';
+import 'package:absensi/services/absensi_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:absensi/utils/string_helper.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  static const Duration _rippleDuration = Duration(milliseconds: 3200);
+  static const Duration _rippleDelay = Duration(milliseconds: 1000);
+  static const double _rippleOuterSize = 108;
+  static const double _rippleInnerSize = 104;
+  static const double _rippleOuterScaleDelta = 0.5;
+  static const double _rippleInnerScaleDelta = 0.2;
+  static const double _rippleOuterDarkStartAlpha = 0.55;
+  static const double _rippleOuterLightStartAlpha = 0.24;
+  static const double _rippleInnerDarkStartAlpha = 0.72;
+  static const double _rippleInnerLightStartAlpha = 0.30;
+  static const double _rippleOuterDarkStroke = 2.4;
+  static const double _rippleOuterLightStroke = 1.8;
+  static const double _rippleInnerDarkStroke = 3.2;
+  static const double _rippleInnerLightStroke = 2.4;
+
+  final _authService = AuthService();
+  Map<String, dynamic>? _user;
+  bool _isLoading = true;
+
+  late Timer _clockTimer;
+  DateTime _now = DateTime.now();
+
+  late AnimationController _rippleController;
+  Timer? _rippleDelayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => _now = DateTime.now());
+    });
+
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: _rippleDuration,
+    );
+
+    _rippleController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _rippleDelayTimer?.cancel();
+        _rippleDelayTimer = Timer(_rippleDelay, () {
+          if (!mounted) return;
+          _rippleController.forward(from: 0);
+        });
+      }
+    });
+
+    _rippleController.forward();
+  }
+
+  @override
+  void dispose() {
+    _clockTimer.cancel();
+    _rippleDelayTimer?.cancel();
+    _rippleController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await _authService.getUser();
+    setState(() {
+      _user = user;
+      _isLoading = false;
+    });
+  }
+
+  String _getUserName() {
+    if (_user == null) return 'User';
+    final karyawan = _user!['karyawan'];
+    if (karyawan != null && karyawan['nama'] != null) {
+      final formatted = StringHelper.capitalizeWords(
+        karyawan['nama'] as String?,
+      );
+      return formatted.isEmpty ? 'User' : formatted;
+    }
+    final formatted = StringHelper.capitalizeWords(
+      (_user!['name'] ?? _user!['username']) as String?,
+    );
+    return formatted.isEmpty ? 'User' : formatted;
+  }
+
+  String _getJabatan() {
+    if (_user == null) return '';
+    final karyawan = _user!['karyawan'];
+    if (karyawan != null && karyawan['jabatan'] != null) {
+      final formatted = StringHelper.capitalizeWords(
+        karyawan['jabatan']['nama'] as String?,
+      );
+      return formatted.isEmpty ? '' : formatted;
+    }
+    return '';
+  }
+
+  String _formatTime(DateTime dt) {
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
+  }
+
+  void _showStatusSnackBar({
+    required String message,
+    required Color backgroundColor,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: AppTheme.snackTextColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: backgroundColor,
+        duration: duration,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Future<void> _handleAbsen() async {
+    // 1. Check Location Permission
+    var locationStatus = await Permission.location.request();
+    if (!locationStatus.isGranted) {
+      _showStatusSnackBar(
+        message: 'Izin lokasi dibutuhkan untuk absen',
+        backgroundColor: AppTheme.snackWarningBg,
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // 2. Get Current Location
+      Position currentPosition = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+        ),
+      );
+
+      // 3. Get expected coordinates from user data
+      final lokasi = _user?['karyawan']?['lokasi'];
+
+      if (lokasi == null || lokasi['lat'] == null || lokasi['lng'] == null) {
+        if (!mounted) return;
+        Navigator.pop(context); // close loading
+        _showStatusSnackBar(
+          message: 'Data koordinat lokasi kerja tidak ditemukan',
+          backgroundColor: AppTheme.snackErrorBg,
+        );
+        return;
+      }
+
+      final double targetLat =
+          double.tryParse(lokasi?['lat']?.toString() ?? '') ?? 0.0;
+      final double targetLng =
+          double.tryParse(lokasi?['lng']?.toString() ?? '') ?? 0.0;
+
+      // 4. Calculate Distance
+      final double distanceInMeters = Geolocator.distanceBetween(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        targetLat,
+        targetLng,
+      );
+
+      // Max radius 20 meters
+      if (distanceInMeters > 20) {
+        if (!mounted) return;
+        Navigator.pop(context); // close loading
+
+        _showStatusSnackBar(
+          message:
+              'Anda berada di luar jangkauan area kerja. Jarak Anda: ${distanceInMeters.toStringAsFixed(1)}m dari titik pusat.',
+          backgroundColor: AppTheme.snackErrorBg,
+          duration: const Duration(seconds: 4),
+        );
+        return;
+      }
+
+      // 5. Send to API if within radius
+      final absensiService = AbsensiService();
+      final result = await absensiService.submitAbsen();
+
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+
+      // Show result message
+      _showStatusSnackBar(
+        message: result.message,
+        backgroundColor:
+            result.success ? AppTheme.snackSuccessBg : AppTheme.snackErrorBg,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      _showStatusSnackBar(
+        message: 'Gagal akses lokasi, pastikan GPS aktif dan coba lagi.',
+        backgroundColor: AppTheme.snackErrorBg,
+      );
+    }
+  }
+
+  Widget _buildRippleEffect(bool isDark) {
+    return AnimatedBuilder(
+      animation: _rippleController,
+      builder: (context, child) {
+        final progress = _rippleController.value;
+        final rippleBaseColor = isDark ? Colors.white : AppTheme.primaryDark;
+        final outerStartAlpha =
+            isDark ? _rippleOuterDarkStartAlpha : _rippleOuterLightStartAlpha;
+        final innerStartAlpha =
+            isDark ? _rippleInnerDarkStartAlpha : _rippleInnerLightStartAlpha;
+        final double outerAlpha =
+            (outerStartAlpha * (1 - progress)).clamp(0.0, 1.0).toDouble();
+        final double innerAlpha =
+            (innerStartAlpha * (1 - progress)).clamp(0.0, 1.0).toDouble();
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Outer ripple
+            Transform.scale(
+              scale: 1.0 + (progress * _rippleOuterScaleDelta),
+              child: Container(
+                width: _rippleOuterSize,
+                height: _rippleOuterSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: rippleBaseColor.withValues(alpha: outerAlpha),
+                    width:
+                        isDark
+                            ? _rippleOuterDarkStroke
+                            : _rippleOuterLightStroke,
+                  ),
+                ),
+              ),
+            ),
+            // Inner ripple
+            Transform.scale(
+              scale: 1.0 + (progress * _rippleInnerScaleDelta),
+              child: Container(
+                width: _rippleInnerSize,
+                height: _rippleInnerSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: rippleBaseColor.withValues(alpha: innerAlpha),
+                    width:
+                        isDark
+                            ? _rippleInnerDarkStroke
+                            : _rippleInnerLightStroke,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : AppTheme.primaryDark;
+    final subtitleColor =
+        isDark ? Colors.white.withValues(alpha: 0.6) : Colors.grey[500]!;
+
+    if (_isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: isDark ? Colors.white : AppTheme.accent,
+        ),
+      );
+    }
+
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        child: Column(
+          children: [
+            // --- Header ---
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Halo, ${_getUserName()}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (_getJabatan().isNotEmpty)
+                        Text(
+                          _getJabatan(),
+                          style: TextStyle(fontSize: 13, color: subtitleColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // --- Live Clock ---
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: Text(
+                  _formatTime(_now),
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+            ),
+
+            // --- Fingerprint Absen Button ---
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _buildRippleEffect(isDark),
+                        GestureDetector(
+                          onTap: _handleAbsen,
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark ? AppTheme.accent : Colors.white,
+                              border: Border.all(
+                                color:
+                                    isDark
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : AppTheme.primaryDark.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      isDark
+                                          ? AppTheme.accent.withValues(
+                                            alpha: 0.4,
+                                          )
+                                          : Colors.grey.withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.fingerprint_rounded,
+                              size: 48,
+                              color:
+                                  isDark ? Colors.white : AppTheme.primaryDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Absen',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // --- Jam Masuk / Jam Pulang ---
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '--:--',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Jam Masuk',
+                          style: TextStyle(fontSize: 13, color: subtitleColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '--:--',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Jam Pulang',
+                          style: TextStyle(fontSize: 13, color: subtitleColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Bottom spacing for navbar
+            const SizedBox(height: 80),
+          ],
+        ),
+      ),
+    );
+  }
+}
