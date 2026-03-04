@@ -403,7 +403,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Icon(
                       Icons.fingerprint_rounded,
                       size: buttonIconSize,
-                      color: isDark ? Colors.white : AppTheme.primaryDark,
+                      color: isDark ? Colors.white : AppTheme.secondaryDeep,
                     ),
                   ),
                 ),

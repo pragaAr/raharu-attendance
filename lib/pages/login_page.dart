@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage>
         isDark
             ? AppTheme.primaryDeep.withValues(alpha: 0.3)
             : AppTheme.primaryDark.withValues(alpha: 0.15);
-    final buttonColor = isDark ? AppTheme.accent : AppTheme.primaryDark;
+    final buttonColor = isDark ? AppTheme.accent : AppTheme.secondaryDeep;
     final buttonDisabledColor = buttonColor.withValues(alpha: 0.55);
     final buttonTextColor = Colors.white;
 
@@ -159,13 +159,6 @@ class _LoginPageState extends State<LoginPage>
                               borderRadius: BorderRadius.circular(
                                 isCompact ? 12 : 15,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: logoShadowColor,
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
                             ),
                             child: Image.asset(
                               'assets/images/logo-icon.png',

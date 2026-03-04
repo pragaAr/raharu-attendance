@@ -5,6 +5,7 @@ class AppTheme {
   static const Color primaryDark = Color(0xFF1A1A2E);
   static const Color primaryMid = Color(0xFF16213E);
   static const Color primaryDeep = Color(0xFF0F3460);
+  static const Color secondaryDeep = Color(0xFFED1F24);
   static const Color accent = Color(0xFF1A1A6C);
   static const Color snackSuccessBg = Color(0xFF1B5E20);
   static const Color snackErrorBg = Color(0xFFB71C1C);

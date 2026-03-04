@@ -84,7 +84,7 @@ class _HistoryPageState extends State<HistoryPage>
                   child: TabBar(
                     controller: _tabController,
                     indicator: BoxDecoration(
-                      color: isDark ? AppTheme.accent : AppTheme.primaryDark,
+                      color: isDark ? AppTheme.accent : AppTheme.secondaryDeep,
                       borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
