@@ -31,88 +31,112 @@ class _HistoryPageState extends State<HistoryPage>
     final subtitleColor =
         isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[500]!;
 
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Text(
-              'Riwayat',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Histori kehadiran dan cuti',
-              style: TextStyle(fontSize: 13, color: subtitleColor),
-            ),
-            const SizedBox(height: 20),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final isCompact =
+            constraints.maxHeight < 700 ||
+            mediaQuery.orientation == Orientation.landscape;
+        final horizontalPadding = isCompact ? 16.0 : 24.0;
+        final topPadding = isCompact ? 16.0 : 24.0;
+        final sectionSpacing = isCompact ? 14.0 : 20.0;
 
-            // Tab Bar
-            Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.grey[100],
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: isDark ? AppTheme.accent : AppTheme.primaryDark,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                labelColor: Colors.white,
-                unselectedLabelColor: isDark
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.grey[500],
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                tabs: const [
-                  Tab(text: 'Absensi'),
-                  Tab(text: 'Cuti / Libur'),
-                ],
-              ),
+        return SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              topPadding,
+              horizontalPadding,
+              0,
             ),
-            const SizedBox(height: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Text(
+                  'Riwayat',
+                  style: TextStyle(
+                    fontSize: isCompact ? 22 : 24,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Histori kehadiran dan cuti',
+                  style: TextStyle(
+                    fontSize: isCompact ? 12 : 13,
+                    color: subtitleColor,
+                  ),
+                ),
+                SizedBox(height: sectionSpacing),
 
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildEmptyState(
-                    icon: Icons.history_rounded,
-                    title: 'Belum ada data absensi',
-                    subtitle: 'Riwayat absensi akan muncul di sini',
-                    isDark: isDark,
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
+                // Tab Bar
+                Container(
+                  decoration: BoxDecoration(
+                    color:
+                        isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(isCompact ? 12 : 14),
                   ),
-                  _buildEmptyState(
-                    icon: Icons.event_note_rounded,
-                    title: 'Belum ada data cuti',
-                    subtitle: 'Riwayat cuti dan libur akan muncul di sini',
-                    isDark: isDark,
-                    textColor: textColor,
-                    subtitleColor: subtitleColor,
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: isDark ? AppTheme.accent : AppTheme.primaryDark,
+                      borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: Colors.white,
+                    unselectedLabelColor:
+                        isDark
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.grey[500],
+                    labelStyle: TextStyle(
+                      fontSize: isCompact ? 13 : 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    tabs: const [
+                      Tab(text: 'Absensi'),
+                      Tab(text: 'Cuti / Libur'),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                SizedBox(height: sectionSpacing),
+
+                // Tab content
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildEmptyState(
+                        icon: Icons.history_rounded,
+                        title: 'Belum ada data absensi',
+                        subtitle: 'Riwayat absensi akan muncul di sini',
+                        isDark: isDark,
+                        textColor: textColor,
+                        subtitleColor: subtitleColor,
+                        isCompact: isCompact,
+                      ),
+                      _buildEmptyState(
+                        icon: Icons.event_note_rounded,
+                        title: 'Belum ada data cuti',
+                        subtitle: 'Riwayat cuti dan libur akan muncul di sini',
+                        isDark: isDark,
+                        textColor: textColor,
+                        subtitleColor: subtitleColor,
+                        isCompact: isCompact,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -123,43 +147,50 @@ class _HistoryPageState extends State<HistoryPage>
     required bool isDark,
     required Color textColor,
     required Color subtitleColor,
+    required bool isCompact,
   }) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: isCompact ? 68 : 80,
+            height: isCompact ? 68 : 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.grey[100],
+              color:
+                  isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.grey[100],
             ),
             child: Icon(
               icon,
-              size: 36,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.3)
-                  : Colors.grey[400],
+              size: isCompact ? 30 : 36,
+              color:
+                  isDark
+                      ? Colors.white.withValues(alpha: 0.3)
+                      : Colors.grey[400],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isCompact ? 12 : 16),
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isCompact ? 15 : 16,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 13, color: subtitleColor),
+            style: TextStyle(
+              fontSize: isCompact ? 12 : 13,
+              color: subtitleColor,
+            ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 80),
         ],
       ),
     );

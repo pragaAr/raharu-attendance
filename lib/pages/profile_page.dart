@@ -170,246 +170,269 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return SafeArea(
-      bottom: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Text(
-              'Profil',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 24),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final isCompact =
+            constraints.maxHeight < 700 ||
+            mediaQuery.orientation == Orientation.landscape;
+        final horizontalPadding = isCompact ? 16.0 : 24.0;
+        final topPadding = isCompact ? 16.0 : 24.0;
+        final bottomPadding = isCompact ? 76.0 : 100.0;
+        final cardPadding = isCompact ? 16.0 : 20.0;
+        final sectionGap = isCompact ? 12.0 : 16.0;
 
-            // Avatar & Name card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color:
-                          isDark
-                              ? AppTheme.accent.withValues(alpha: 0.5)
-                              : Colors.grey[200],
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        final fotoUrl = _getAvatarUrl();
-                        if (fotoUrl == null) return;
-                        _showAvatarPreview(fotoUrl, isDark);
-                      },
-                      child: _buildAvatar(isDark),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _getUserName(),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getJabatan(),
-                    style: TextStyle(fontSize: 13, color: subtitleColor),
-                  ),
-                ],
-              ),
+        return SafeArea(
+          bottom: false,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              topPadding,
+              horizontalPadding,
+              bottomPadding,
             ),
-            const SizedBox(height: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Text(
+                  'Profil',
+                  style: TextStyle(
+                    fontSize: isCompact ? 22 : 24,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+                SizedBox(height: isCompact ? 16 : 24),
 
-            // Identity details
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Informasi',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
+                // Avatar & Name card
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(cardPadding),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
+                    border: Border.all(color: borderColor),
                   ),
-                  const SizedBox(height: 16),
-                  _buildInfoRow(
-                    Icons.badge_outlined,
-                    'NIK',
-                    _getNik(),
-                    textColor,
-                    subtitleColor,
-                    isDark,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color:
+                              isDark
+                                  ? AppTheme.accent.withValues(alpha: 0.5)
+                                  : Colors.grey[200],
+                        ),
+                        child: GestureDetector(
+                          onTap: () {
+                            final fotoUrl = _getAvatarUrl();
+                            if (fotoUrl == null) return;
+                            _showAvatarPreview(fotoUrl, isDark);
+                          },
+                          child: _buildAvatar(isDark),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _getUserName(),
+                        style: TextStyle(
+                          fontSize: isCompact ? 17 : 18,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _getJabatan(),
+                        style: TextStyle(
+                          fontSize: isCompact ? 12 : 13,
+                          color: subtitleColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  _buildDivider(borderColor),
-                  _buildInfoRow(
-                    Icons.person_outline_rounded,
-                    'Username',
-                    _getUsername(),
-                    textColor,
-                    subtitleColor,
-                    isDark,
-                  ),
-                  _buildDivider(borderColor),
-                  _buildInfoRow(
-                    Icons.work_outline_rounded,
-                    'Jabatan',
-                    _getJabatan(),
-                    textColor,
-                    subtitleColor,
-                    isDark,
-                  ),
-                  _buildDivider(borderColor),
-                  _buildInfoRow(
-                    Icons.business_outlined,
-                    'Departemen',
-                    _getDepartemen(),
-                    textColor,
-                    subtitleColor,
-                    isDark,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+                ),
+                SizedBox(height: sectionGap),
 
-            // Settings
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Pengaturan',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
+                // Identity details
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(cardPadding),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
+                    border: Border.all(color: borderColor),
                   ),
-                  const SizedBox(height: 12),
-                  // Theme toggle
-                  Consumer<ThemeProvider>(
-                    builder: (context, themeProvider, _) {
-                      return Row(
-                        children: [
-                          Icon(
-                            themeProvider.isDark
-                                ? Icons.dark_mode_rounded
-                                : Icons.light_mode_rounded,
-                            color:
-                                isDark
-                                    ? Colors.white.withValues(alpha: 0.7)
-                                    : Colors.grey[600],
-                            size: 22,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Mode Gelap',
-                              style: TextStyle(fontSize: 14, color: textColor),
-                            ),
-                          ),
-                          Switch(
-                            value: themeProvider.isDark,
-                            onChanged: (_) => themeProvider.toggleTheme(),
-                            activeColor: const Color.fromARGB(
-                              255,
-                              141,
-                              141,
-                              218,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Informasi',
+                        style: TextStyle(
+                          fontSize: isCompact ? 14 : 15,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      SizedBox(height: isCompact ? 12 : 16),
+                      _buildInfoRow(
+                        Icons.badge_outlined,
+                        'NIK',
+                        _getNik(),
+                        textColor,
+                        subtitleColor,
+                        isDark,
+                      ),
+                      _buildDivider(borderColor),
+                      _buildInfoRow(
+                        Icons.person_outline_rounded,
+                        'Username',
+                        _getUsername(),
+                        textColor,
+                        subtitleColor,
+                        isDark,
+                      ),
+                      _buildDivider(borderColor),
+                      _buildInfoRow(
+                        Icons.work_outline_rounded,
+                        'Jabatan',
+                        _getJabatan(),
+                        textColor,
+                        subtitleColor,
+                        isDark,
+                      ),
+                      _buildDivider(borderColor),
+                      _buildInfoRow(
+                        Icons.business_outlined,
+                        'Departemen',
+                        _getDepartemen(),
+                        textColor,
+                        subtitleColor,
+                        isDark,
+                      ),
+                    ],
                   ),
-                  _buildDivider(borderColor),
-                  // Change password
-                  _buildSettingsButton(
-                    icon: Icons.lock_outline_rounded,
-                    label: 'Ubah Password',
-                    isDark: isDark,
-                    textColor: textColor,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'Fitur segera hadir',
-                            style: TextStyle(
-                              color: AppTheme.snackTextColor,
-                              fontWeight: FontWeight.w600,
+                ),
+                SizedBox(height: sectionGap),
+
+                // Settings
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(cardPadding),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pengaturan',
+                        style: TextStyle(
+                          fontSize: isCompact ? 14 : 15,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Consumer<ThemeProvider>(
+                        builder: (context, themeProvider, _) {
+                          return Row(
+                            children: [
+                              Icon(
+                                themeProvider.isDark
+                                    ? Icons.dark_mode_rounded
+                                    : Icons.light_mode_rounded,
+                                color:
+                                    isDark
+                                        ? Colors.white.withValues(alpha: 0.7)
+                                        : Colors.grey[600],
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Mode Gelap',
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 13 : 14,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ),
+                              Switch(
+                                value: themeProvider.isDark,
+                                onChanged: (_) => themeProvider.toggleTheme(),
+                                activeColor: const Color.fromARGB(
+                                  255,
+                                  141,
+                                  141,
+                                  218,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      _buildDivider(borderColor),
+                      _buildSettingsButton(
+                        icon: Icons.lock_outline_rounded,
+                        label: 'Ubah Password',
+                        isDark: isDark,
+                        textColor: textColor,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Fitur segera hadir',
+                                style: TextStyle(
+                                  color: AppTheme.snackTextColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              backgroundColor: AppTheme.snackWarningBg,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
+                          );
+                        },
+                      ),
+                      _buildDivider(borderColor),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: _handleLogout,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          backgroundColor: AppTheme.snackWarningBg,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Keluar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Icon(Icons.logout_rounded, size: 18),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
-                  _buildDivider(borderColor),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: _handleLogout,
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Keluar',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Icon(Icons.logout_rounded, size: 18),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

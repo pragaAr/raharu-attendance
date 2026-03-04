@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:absensi/config/app_theme.dart';
 import 'package:absensi/services/auth_service.dart';
 import 'package:absensi/pages/main_shell.dart';
 
@@ -93,210 +94,244 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : AppTheme.primaryDark;
+    final subtitleColor =
+        isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[600]!;
+    final footerColor =
+        isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[500]!;
+    final cardColor =
+        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[50]!;
+    final cardBorderColor =
+        isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey[200]!;
+    final logoContainerColor = isDark ? Colors.white : Colors.grey[100]!;
+    final logoShadowColor =
+        isDark
+            ? AppTheme.primaryDeep.withValues(alpha: 0.3)
+            : AppTheme.primaryDark.withValues(alpha: 0.15);
+    final buttonColor = isDark ? AppTheme.accent : AppTheme.primaryDark;
+    final buttonDisabledColor = buttonColor.withValues(alpha: 0.55);
+    final buttonTextColor = Colors.white;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark ? AppTheme.darkGradient : null,
+          color: isDark ? null : Colors.white,
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Logo
-                      Container(
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF0F3460,
-                              ).withValues(alpha: 0.3),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final mediaQuery = MediaQuery.of(context);
+              final isCompact =
+                  constraints.maxHeight < 700 ||
+                  mediaQuery.orientation == Orientation.landscape;
+              final horizontalPadding = isCompact ? 16.0 : 28.0;
+              final topPadding = isCompact ? 12.0 : 20.0;
+              final logoSize = isCompact ? 24.0 : 30.0;
+              final cardPadding = isCompact ? 20.0 : 28.0;
+              final titleFontSize = isCompact ? 24.0 : 28.0;
+              final footerTopSpace = isCompact ? 20.0 : 32.0;
+
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  topPadding,
+                  horizontalPadding,
+                  20,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        mainAxisAlignment:
+                            isCompact
+                                ? MainAxisAlignment.start
+                                : MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(isCompact ? 12 : 15),
+                            decoration: BoxDecoration(
+                              color: logoContainerColor,
+                              borderRadius: BorderRadius.circular(
+                                isCompact ? 12 : 15,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: logoShadowColor,
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/images/logo-icon.png',
-                          height: 30,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // App title
-                      const Text(
-                        'Absensi',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Login card
-                      Container(
-                        padding: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
+                            child: Image.asset(
+                              'assets/images/logo-icon.png',
+                              height: logoSize,
+                              fit: BoxFit.contain,
+                            ),
                           ),
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const Text(
-                                'Masuk',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                          SizedBox(height: isCompact ? 12 : 16),
+                          Text(
+                            'Absensi',
+                            style: TextStyle(
+                              fontSize: titleFontSize,
+                              fontWeight: FontWeight.w700,
+                              color: titleColor,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          SizedBox(height: isCompact ? 24 : 40),
+                          Container(
+                            padding: EdgeInsets.all(cardPadding),
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(
+                                isCompact ? 18 : 24,
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Silakan masukkan kredensial Anda',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                ),
-                              ),
-                              const SizedBox(height: 28),
-
-                              // Username
-                              TextFormField(
-                                controller: _usernameController,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: _inputDecoration(
-                                  label: 'Username',
-                                  icon: Icons.person_outline_rounded,
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Username wajib diisi';
-                                  }
-                                  return null;
-                                },
-                                textInputAction: TextInputAction.next,
-                              ),
-                              const SizedBox(height: 18),
-
-                              // Password
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: _inputDecoration(
-                                  label: 'Password',
-                                  icon: Icons.lock_outline_rounded,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off_rounded
-                                          : Icons.visibility_rounded,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      size: 20,
+                              border: Border.all(color: cardBorderColor),
+                            ),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    'Masuk',
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 20 : 22,
+                                      fontWeight: FontWeight.w600,
+                                      color: titleColor,
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Silakan masukkan kredensial Anda',
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 12 : 13,
+                                      color: subtitleColor,
+                                    ),
+                                  ),
+                                  SizedBox(height: isCompact ? 20 : 28),
+                                  TextFormField(
+                                    controller: _usernameController,
+                                    style: TextStyle(color: titleColor),
+                                    decoration: _inputDecoration(
+                                      isDark: isDark,
+                                      label: 'Username',
+                                      icon: Icons.person_outline_rounded,
+                                    ),
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return 'Username wajib diisi';
+                                      }
+                                      return null;
                                     },
+                                    textInputAction: TextInputAction.next,
                                   ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Password wajib diisi';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password minimal 6 karakter';
-                                  }
-                                  return null;
-                                },
-                                textInputAction: TextInputAction.done,
-                                onFieldSubmitted: (_) => _handleLogin(),
-                              ),
-                              const SizedBox(height: 28),
-
-                              // Login Button
-                              SizedBox(
-                                height: 52,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE53935),
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor: const Color(
-                                      0xFFE53935,
-                                    ).withValues(alpha: 0.6),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                  SizedBox(height: isCompact ? 14 : 18),
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    style: TextStyle(color: titleColor),
+                                    decoration: _inputDecoration(
+                                      isDark: isDark,
+                                      label: 'Password',
+                                      icon: Icons.lock_outline_rounded,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                          color:
+                                              isDark
+                                                  ? Colors.white.withValues(
+                                                    alpha: 0.5,
+                                                  )
+                                                  : Colors.grey[500],
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscurePassword =
+                                                !_obscurePassword;
+                                          });
+                                        },
+                                      ),
                                     ),
-                                    elevation: 0,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Password wajib diisi';
+                                      }
+                                      if (value.length < 6) {
+                                        return 'Password minimal 6 karakter';
+                                      }
+                                      return null;
+                                    },
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) => _handleLogin(),
                                   ),
-                                  child:
-                                      _isLoading
-                                          ? const SizedBox(
-                                            height: 22,
-                                            width: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.5,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                          : const Text(
-                                            'Masuk',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.5,
-                                            ),
+                                  SizedBox(height: isCompact ? 20 : 28),
+                                  SizedBox(
+                                    height: isCompact ? 48 : 52,
+                                    child: ElevatedButton(
+                                      onPressed:
+                                          _isLoading ? null : _handleLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: buttonColor,
+                                        foregroundColor: buttonTextColor,
+                                        disabledBackgroundColor:
+                                            buttonDisabledColor,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            isCompact ? 12 : 14,
                                           ),
-                                ),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child:
+                                          _isLoading
+                                              ? const SizedBox(
+                                                height: 22,
+                                                width: 22,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2.5,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                              : Text(
+                                                'Masuk',
+                                                style: TextStyle(
+                                                  fontSize: isCompact ? 15 : 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                          SizedBox(height: footerTopSpace),
+                          Text(
+                            'Copyright 2026 Raharu Indonesia',
+                            style: TextStyle(
+                              fontSize: isCompact ? 11 : 12,
+                              color: footerColor,
+                            ),
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: 32),
-
-                      // Footer
-                      Text(
-                        '© 2026 Raharu Indonesia',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -304,35 +339,40 @@ class _LoginPageState extends State<LoginPage>
   }
 
   InputDecoration _inputDecoration({
+    required bool isDark,
     required String label,
     required IconData icon,
     Widget? suffixIcon,
   }) {
+    final labelColor =
+        isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[600]!;
+    final iconColor =
+        isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[600]!;
+    final fillColor =
+        isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey[100]!;
+    final enabledBorderColor =
+        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!;
+    final errorColor =
+        isDark ? const Color(0xFFEF9A9A) : const Color(0xFFD32F2F);
+
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(
-        color: Colors.white.withValues(alpha: 0.5),
-        fontSize: 14,
-      ),
-      prefixIcon: Icon(
-        icon,
-        color: Colors.white.withValues(alpha: 0.5),
-        size: 20,
-      ),
+      labelStyle: TextStyle(color: labelColor, fontSize: 14),
+      prefixIcon: Icon(icon, color: iconColor, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.06),
+      fillColor: fillColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderSide: BorderSide(color: enabledBorderColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+        borderSide: const BorderSide(color: AppTheme.accent, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -342,7 +382,7 @@ class _LoginPageState extends State<LoginPage>
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Color(0xFFEF5350), width: 1.5),
       ),
-      errorStyle: const TextStyle(color: Color(0xFFEF9A9A)),
+      errorStyle: TextStyle(color: errorColor),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }

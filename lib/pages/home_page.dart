@@ -304,174 +304,233 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     }
 
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-        child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final isCompact =
+            constraints.maxHeight < 760 ||
+            mediaQuery.orientation == Orientation.landscape;
+        final horizontalPadding = isCompact ? 16.0 : 24.0;
+        final topPadding = isCompact ? 16.0 : 24.0;
+        final clockFontSize = isCompact ? 42.0 : 56.0;
+        final indicatorFontSize = isCompact ? 17.0 : 20.0;
+        final indicatorLabelSize = isCompact ? 12.0 : 13.0;
+        final buttonSize = isCompact ? 84.0 : 100.0;
+        final buttonIconSize = isCompact ? 40.0 : 48.0;
+        final buttonGap = isCompact ? 10.0 : 14.0;
+        final bottomSpacing = isCompact ? 18.0 : 80.0;
+        final sectionSpacing = isCompact ? 14.0 : 0.0;
+        final rippleScale = isCompact ? 0.8 : 1.0;
+
+        final headerSection = Row(
           children: [
-            // --- Header ---
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Halo, ${_getUserName()}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: textColor,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Halo, ${_getUserName()}',
+                    style: TextStyle(
+                      fontSize: isCompact ? 18 : 20,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (_getJabatan().isNotEmpty)
+                    Text(
+                      _getJabatan(),
+                      style: TextStyle(
+                        fontSize: isCompact ? 12 : 13,
+                        color: subtitleColor,
                       ),
-                      if (_getJabatan().isNotEmpty)
-                        Text(
-                          _getJabatan(),
-                          style: TextStyle(fontSize: 13, color: subtitleColor),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+
+        final clockSection = FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            _formatTime(_now),
+            style: TextStyle(
+              fontSize: clockFontSize,
+              fontWeight: FontWeight.w800,
+              color: textColor,
+              letterSpacing: isCompact ? 1.2 : 2,
+            ),
+          ),
+        );
+
+        final absenSection = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Transform.scale(
+                  scale: rippleScale,
+                  child: _buildRippleEffect(isDark),
+                ),
+                GestureDetector(
+                  onTap: _handleAbsen,
+                  child: Container(
+                    width: buttonSize,
+                    height: buttonSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDark ? AppTheme.accent : Colors.white,
+                      border: Border.all(
+                        color:
+                            isDark
+                                ? Colors.white.withValues(alpha: 0.2)
+                                : AppTheme.primaryDark.withValues(alpha: 0.15),
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              isDark
+                                  ? AppTheme.accent.withValues(alpha: 0.4)
+                                  : Colors.grey.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
                         ),
-                    ],
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.fingerprint_rounded,
+                      size: buttonIconSize,
+                      color: isDark ? Colors.white : AppTheme.primaryDark,
+                    ),
                   ),
                 ),
               ],
             ),
-
-            // --- Live Clock ---
-            Expanded(
-              flex: 3,
-              child: Center(
-                child: Text(
-                  _formatTime(_now),
-                  style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.w800,
-                    color: textColor,
-                    letterSpacing: 2,
-                  ),
-                ),
+            SizedBox(height: buttonGap),
+            Text(
+              'Absen',
+              style: TextStyle(
+                fontSize: isCompact ? 14 : 16,
+                fontWeight: FontWeight.w600,
+                color: textColor,
               ),
             ),
+          ],
+        );
 
-            // --- Fingerprint Absen Button ---
+        final infoSection = Row(
+          children: [
             Expanded(
-              flex: 3,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        _buildRippleEffect(isDark),
-                        GestureDetector(
-                          onTap: _handleAbsen,
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isDark ? AppTheme.accent : Colors.white,
-                              border: Border.all(
-                                color:
-                                    isDark
-                                        ? Colors.white.withValues(alpha: 0.2)
-                                        : AppTheme.primaryDark.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                width: 3,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      isDark
-                                          ? AppTheme.accent.withValues(
-                                            alpha: 0.4,
-                                          )
-                                          : Colors.grey.withValues(alpha: 0.2),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.fingerprint_rounded,
-                              size: 48,
-                              color:
-                                  isDark ? Colors.white : AppTheme.primaryDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Absen',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // --- Jam Masuk / Jam Pulang ---
-            Expanded(
-              flex: 2,
-              child: Row(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '--:--',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Jam Masuk',
-                          style: TextStyle(fontSize: 13, color: subtitleColor),
-                        ),
-                      ],
+                  Text(
+                    '--:--',
+                    style: TextStyle(
+                      fontSize: indicatorFontSize,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
                     ),
                   ),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '--:--',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Jam Pulang',
-                          style: TextStyle(fontSize: 13, color: subtitleColor),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Jam Masuk',
+                    style: TextStyle(
+                      fontSize: indicatorLabelSize,
+                      color: subtitleColor,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Bottom spacing for navbar
-            const SizedBox(height: 80),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '--:--',
+                    style: TextStyle(
+                      fontSize: indicatorFontSize,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Jam Pulang',
+                    style: TextStyle(
+                      fontSize: indicatorLabelSize,
+                      color: subtitleColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
-      ),
+        );
+
+        if (isCompact) {
+          final bottomPadding = 84.0 + mediaQuery.padding.bottom;
+          return SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                topPadding,
+                horizontalPadding,
+                bottomPadding,
+              ),
+              child: Column(
+                children: [
+                  headerSection,
+                  const SizedBox(height: 24),
+                  clockSection,
+                  const SizedBox(height: 28),
+                  absenSection,
+                  const SizedBox(height: 28),
+                  infoSection,
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              topPadding,
+              horizontalPadding,
+              0,
+            ),
+            child: Column(
+              children: [
+                // --- Header ---
+                headerSection,
+                SizedBox(height: sectionSpacing),
+
+                // --- Live Clock ---
+                Expanded(flex: 3, child: Center(child: clockSection)),
+                SizedBox(height: sectionSpacing),
+
+                // --- Fingerprint Absen Button ---
+                Expanded(flex: 3, child: Center(child: absenSection)),
+                SizedBox(height: sectionSpacing),
+
+                // --- Jam Masuk / Jam Pulang ---
+                Expanded(flex: 2, child: Center(child: infoSection)),
+
+                // Bottom spacing for navbar
+                SizedBox(height: bottomSpacing),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
