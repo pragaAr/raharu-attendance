@@ -208,7 +208,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       // 5. Send to API if within radius
       final absensiService = AbsensiService();
-      final result = await absensiService.submitAbsen();
+      final result = await absensiService.submitAbsen(
+        lat: currentPosition.latitude,
+        lng: currentPosition.longitude,
+      );
 
       if (!mounted) return;
       Navigator.pop(context); // close loading
@@ -381,7 +384,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     height: buttonSize,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDark ? AppTheme.accent : Colors.white,
+                      color: isDark ? AppTheme.secondaryDeep : Colors.white,
                       border: Border.all(
                         color:
                             isDark
@@ -393,7 +396,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         BoxShadow(
                           color:
                               isDark
-                                  ? AppTheme.accent.withValues(alpha: 0.4)
+                                  ? AppTheme.secondaryDeep.withValues(alpha: 0.4)
                                   : Colors.grey.withValues(alpha: 0.2),
                           blurRadius: 20,
                           offset: const Offset(0, 6),

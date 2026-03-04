@@ -105,11 +105,8 @@ class _LoginPageState extends State<LoginPage>
     final cardBorderColor =
         isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey[200]!;
     final logoContainerColor = isDark ? Colors.white : Colors.grey[100]!;
-    final logoShadowColor =
-        isDark
-            ? AppTheme.primaryDeep.withValues(alpha: 0.3)
-            : AppTheme.primaryDark.withValues(alpha: 0.15);
-    final buttonColor = isDark ? AppTheme.accent : AppTheme.secondaryDeep;
+
+    final buttonColor = isDark ? AppTheme.secondaryDeep : AppTheme.primaryDark;
     final buttonDisabledColor = buttonColor.withValues(alpha: 0.55);
     final buttonTextColor = Colors.white;
 

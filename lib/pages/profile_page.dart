@@ -131,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text(
                 'Keluar',
-                style: TextStyle(color: Color(0xFFEF5350)),
+                style: TextStyle(color: AppTheme.secondaryDeep),
               ),
             ),
           ],
@@ -408,6 +408,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: TextButton(
                           onPressed: _handleLogout,
                           style: TextButton.styleFrom(
+                            foregroundColor: AppTheme.secondaryDeep,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: const Row(

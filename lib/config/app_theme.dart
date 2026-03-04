@@ -36,7 +36,7 @@ class AppTheme {
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: Colors.white.withValues(alpha: 0.08),
-      selectedItemColor: Colors.white,
+      selectedItemColor: secondaryDeep,
       unselectedItemColor: Colors.white.withValues(alpha: 0.4),
     ),
     cardTheme: CardThemeData(
