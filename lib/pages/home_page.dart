@@ -96,22 +96,28 @@ class _HomePageState extends State<HomePage>
       _user = user;
     });
 
-    await _syncTodayStatus(showErrorSnackBar: false);
+    final synced = await _syncTodayStatus(showErrorSnackBar: false);
+    if (!synced) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted) return;
+      await _syncTodayStatus(showErrorSnackBar: false);
+    }
     if (!mounted) return;
     setState(() => _isLoading = false);
   }
 
-  Future<void> _syncTodayStatus({required bool showErrorSnackBar}) async {
-    if (_isSyncingStatus) return;
+  Future<bool> _syncTodayStatus({required bool showErrorSnackBar}) async {
+    if (_isSyncingStatus) return false;
     if (mounted) {
       setState(() => _isSyncingStatus = true);
     }
 
     final result = await _absensiService.getTodayStatus();
-    if (!mounted) return;
+    if (!mounted) return false;
+    final isSuccess = result.success && result.data != null;
 
     setState(() {
-      if (result.success && result.data != null) {
+      if (isSuccess) {
         _jamMasuk = result.data!.jamMasuk ?? '--:--';
         _jamPulang = result.data!.jamPulang ?? '--:--';
         _bisaClock = result.data!.bisaClock;
@@ -126,6 +132,8 @@ class _HomePageState extends State<HomePage>
         backgroundColor: AppTheme.snackErrorBg,
       );
     }
+
+    return isSuccess;
   }
 
   String _getUserName() {
@@ -600,7 +608,9 @@ class _HomePageState extends State<HomePage>
           return SafeArea(
             bottom: false,
             child: RefreshIndicator(
-              onRefresh: () => _syncTodayStatus(showErrorSnackBar: true),
+              onRefresh: () async {
+                await _syncTodayStatus(showErrorSnackBar: true);
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
@@ -628,7 +638,9 @@ class _HomePageState extends State<HomePage>
         return SafeArea(
           bottom: false,
           child: RefreshIndicator(
-            onRefresh: () => _syncTodayStatus(showErrorSnackBar: true),
+            onRefresh: () async {
+              await _syncTodayStatus(showErrorSnackBar: true);
+            },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.zero,

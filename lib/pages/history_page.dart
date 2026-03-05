@@ -24,7 +24,7 @@ class _HistoryPageState extends State<HistoryPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadHistory();
+    _loadHistory(forceRefresh: true);
   }
 
   @override
