@@ -408,12 +408,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: TextButton(
                           onPressed: _handleLogout,
                           style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.secondaryDeep,
+                            foregroundColor: Colors.red,
                             padding: const EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.centerLeft,
                           ),
                           child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              Icon(Icons.logout_rounded, size: 18),
+                              SizedBox(width: 12),
                               Text(
                                 'Keluar',
                                 style: TextStyle(
@@ -421,7 +423,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Icon(Icons.logout_rounded, size: 18),
                             ],
                           ),
                         ),

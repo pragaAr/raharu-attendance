@@ -13,7 +13,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   static const Duration _rippleDuration = Duration(milliseconds: 3200);
   static const Duration _rippleDelay = Duration(milliseconds: 1000);
   static const double _rippleOuterSize = 108;
@@ -30,8 +31,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   static const double _rippleInnerLightStroke = 2.4;
 
   final _authService = AuthService();
+  final _absensiService = AbsensiService();
   Map<String, dynamic>? _user;
   bool _isLoading = true;
+  bool _isSyncingStatus = false;
+  String _jamMasuk = '--:--';
+  String _jamPulang = '--:--';
+  bool _bisaClock = true;
+  int _cooldownSisaMenit = 0;
 
   late Timer _clockTimer;
   DateTime _now = DateTime.now();
@@ -42,7 +49,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    WidgetsBinding.instance.addObserver(this);
+    _loadInitialData();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _now = DateTime.now());
     });
@@ -67,18 +75,57 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _clockTimer.cancel();
     _rippleDelayTimer?.cancel();
     _rippleController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUser() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncTodayStatus(showErrorSnackBar: false);
+    }
+  }
+
+  Future<void> _loadInitialData() async {
     final user = await _authService.getUser();
+    if (!mounted) return;
     setState(() {
       _user = user;
-      _isLoading = false;
     });
+
+    await _syncTodayStatus(showErrorSnackBar: false);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _syncTodayStatus({required bool showErrorSnackBar}) async {
+    if (_isSyncingStatus) return;
+    if (mounted) {
+      setState(() => _isSyncingStatus = true);
+    }
+
+    final result = await _absensiService.getTodayStatus();
+    if (!mounted) return;
+
+    setState(() {
+      if (result.success && result.data != null) {
+        _jamMasuk = result.data!.jamMasuk ?? '--:--';
+        _jamPulang = result.data!.jamPulang ?? '--:--';
+        _bisaClock = result.data!.bisaClock;
+        _cooldownSisaMenit = result.data!.cooldownSisaMenit;
+      }
+      _isSyncingStatus = false;
+    });
+
+    if (!result.success && showErrorSnackBar) {
+      _showStatusSnackBar(
+        message: result.message,
+        backgroundColor: AppTheme.snackErrorBg,
+      );
+    }
   }
 
   String _getUserName() {
@@ -112,6 +159,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
   }
 
+  String _formatDate(DateTime dt) {
+    const hari = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
+    const bulan = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    final namaHari = hari[dt.weekday - 1];
+    final namaBulan = bulan[dt.month - 1];
+    final tanggal = dt.day.toString().padLeft(2, '0');
+    return '$namaHari, $tanggal $namaBulan ${dt.year}';
+  }
+
   void _showStatusSnackBar({
     required String message,
     required Color backgroundColor,
@@ -139,6 +217,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _handleAbsen() async {
+    if (!_bisaClock) {
+      final message =
+          _cooldownSisaMenit > 0
+              ? 'Belum bisa absen pulang. Tunggu $_cooldownSisaMenit menit lagi.'
+              : 'Absensi hari ini sudah lengkap.';
+      _showStatusSnackBar(
+        message: message,
+        backgroundColor: AppTheme.snackWarningBg,
+      );
+      return;
+    }
+
     // 1. Check Location Permission
     var locationStatus = await Permission.location.request();
     if (!locationStatus.isGranted) {
@@ -207,8 +297,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
 
       // 5. Send to API if within radius
-      final absensiService = AbsensiService();
-      final result = await absensiService.submitAbsen(
+      final result = await _absensiService.submitAbsen(
         lat: currentPosition.latitude,
         lng: currentPosition.longitude,
       );
@@ -222,6 +311,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         backgroundColor:
             result.success ? AppTheme.snackSuccessBg : AppTheme.snackErrorBg,
       );
+      if (result.success) {
+        await _syncTodayStatus(showErrorSnackBar: false);
+      }
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // close loading
@@ -354,17 +446,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
         );
 
-        final clockSection = FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            _formatTime(_now),
-            style: TextStyle(
-              fontSize: clockFontSize,
-              fontWeight: FontWeight.w800,
-              color: textColor,
-              letterSpacing: isCompact ? 1.2 : 2,
+        final clockSection = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _formatTime(_now),
+                style: TextStyle(
+                  fontSize: clockFontSize,
+                  fontWeight: FontWeight.w800,
+                  color: textColor,
+                  letterSpacing: isCompact ? 1.2 : 2,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              _formatDate(_now),
+              style: TextStyle(
+                fontSize: isCompact ? 12 : 13,
+                color: subtitleColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         );
 
         final absenSection = Column(
@@ -431,7 +537,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '--:--',
+                    _jamMasuk,
                     style: TextStyle(
                       fontSize: indicatorFontSize,
                       fontWeight: FontWeight.w700,
@@ -454,7 +560,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '--:--',
+                    _jamPulang,
                     style: TextStyle(
                       fontSize: indicatorFontSize,
                       fontWeight: FontWeight.w700,
@@ -479,23 +585,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           final bottomPadding = 84.0 + mediaQuery.padding.bottom;
           return SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                topPadding,
-                horizontalPadding,
-                bottomPadding,
-              ),
-              child: Column(
-                children: [
-                  headerSection,
-                  const SizedBox(height: 24),
-                  clockSection,
-                  const SizedBox(height: 28),
-                  absenSection,
-                  const SizedBox(height: 28),
-                  infoSection,
-                ],
+            child: RefreshIndicator(
+              onRefresh: () => _syncTodayStatus(showErrorSnackBar: true),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  topPadding,
+                  horizontalPadding,
+                  bottomPadding,
+                ),
+                child: Column(
+                  children: [
+                    headerSection,
+                    const SizedBox(height: 24),
+                    clockSection,
+                    const SizedBox(height: 28),
+                    absenSection,
+                    const SizedBox(height: 28),
+                    infoSection,
+                  ],
+                ),
               ),
             ),
           );
@@ -503,32 +613,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         return SafeArea(
           bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              topPadding,
-              horizontalPadding,
-              0,
-            ),
-            child: Column(
+          child: RefreshIndicator(
+            onRefresh: () => _syncTodayStatus(showErrorSnackBar: true),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
               children: [
-                // --- Header ---
-                headerSection,
-                SizedBox(height: sectionSpacing),
+                SizedBox(
+                  height: constraints.maxHeight,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      topPadding,
+                      horizontalPadding,
+                      0,
+                    ),
+                    child: Column(
+                      children: [
+                        // --- Header ---
+                        headerSection,
+                        SizedBox(height: sectionSpacing),
 
-                // --- Live Clock ---
-                Expanded(flex: 3, child: Center(child: clockSection)),
-                SizedBox(height: sectionSpacing),
+                        // --- Live Clock ---
+                        Expanded(flex: 3, child: Center(child: clockSection)),
+                        SizedBox(height: sectionSpacing),
 
-                // --- Fingerprint Absen Button ---
-                Expanded(flex: 3, child: Center(child: absenSection)),
-                SizedBox(height: sectionSpacing),
+                        // --- Fingerprint Absen Button ---
+                        Expanded(flex: 3, child: Center(child: absenSection)),
+                        SizedBox(height: sectionSpacing),
 
-                // --- Jam Masuk / Jam Pulang ---
-                Expanded(flex: 2, child: Center(child: infoSection)),
+                        // --- Jam Masuk / Jam Pulang ---
+                        Expanded(flex: 2, child: Center(child: infoSection)),
 
-                // Bottom spacing for navbar
-                SizedBox(height: bottomSpacing),
+                        // Bottom spacing for navbar
+                        SizedBox(height: bottomSpacing),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
