@@ -143,6 +143,8 @@ class AbsensiService {
   Future<AbsensiResult> submitAbsen({
     required double lat,
     required double lng,
+    double? accuracy,
+    bool? isMocked,
   }) async {
     final token = await _authService.getToken();
     if (token == null) {
@@ -153,6 +155,17 @@ class AbsensiService {
     }
 
     try {
+      final payload = <String, dynamic>{
+        'lat': lat,
+        'lng': lng,
+      };
+      if (accuracy != null) {
+        payload['accuracy'] = accuracy;
+      }
+      if (isMocked != null) {
+        payload['is_mocked'] = isMocked;
+      }
+
       final response = await _postWithFallback(
         '/absensi/clock',
         headers: {
@@ -160,7 +173,7 @@ class AbsensiService {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'lat': lat, 'lng': lng}),
+        body: jsonEncode(payload),
       );
 
       final data = jsonDecode(response.body);

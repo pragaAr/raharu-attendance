@@ -256,6 +256,18 @@ class _HomePageState extends State<HomePage>
         ),
       );
 
+      if (currentPosition.isMocked) {
+        if (!mounted) return;
+        Navigator.pop(context); // close loading
+        _showStatusSnackBar(
+          message:
+              'Lokasi terdeteksi dari mock/fake GPS. Nonaktifkan fake location lalu coba lagi.',
+          backgroundColor: AppTheme.snackErrorBg,
+          duration: const Duration(seconds: 4),
+        );
+        return;
+      }
+
       // 3. Get expected coordinates from user data
       final lokasi = _user?['karyawan']?['lokasi'];
 
@@ -300,6 +312,8 @@ class _HomePageState extends State<HomePage>
       final result = await _absensiService.submitAbsen(
         lat: currentPosition.latitude,
         lng: currentPosition.longitude,
+        accuracy: currentPosition.accuracy,
+        isMocked: currentPosition.isMocked,
       );
 
       if (!mounted) return;
